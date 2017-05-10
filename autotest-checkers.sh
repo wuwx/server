@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
 #
+RESULT=0
 
 bash ./build/autoloaderchecker.sh
+RESULT=$(($RESULT+$?))
 bash ./build/mergejschecker.sh
+RESULT=$(($RESULT+$?))
 php ./build/signed-off-checker.php
+RESULT=$(($RESULT+$?))
 php ./build/translation-checker.php
+RESULT=$(($RESULT+$?))
 php ./build/htaccess-checker.php
+RESULT=$(($RESULT+$?))
 
 
 for app in $(find "apps/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n'); do
@@ -29,5 +35,7 @@ for app in $(find "apps/" -mindepth 1 -maxdepth 1 -type d -printf '%f\n'); do
     else
         ./occ app:check-code "$app"
     fi
-    RESULT=$?
+    RESULT=$(($RESULT+$?))
 done;
+
+exit $RESULT
