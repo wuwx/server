@@ -21,6 +21,7 @@
 
 namespace OCA\OAuth2\Controller;
 
+use OCA\OAuth2\Db\AccessTokenMapper;
 use OCA\OAuth2\Db\Client;
 use OCA\OAuth2\Db\ClientMapper;
 use OCP\AppFramework\Controller;
@@ -36,6 +37,8 @@ class SettingsController extends Controller {
 	private $clientMapper;
 	/** @var ISecureRandom */
 	private $secureRandom;
+	/** @var AccessTokenMapper  */
+	private $accessTokenMapper;
 
 	const validChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -45,16 +48,20 @@ class SettingsController extends Controller {
 	 * @param IURLGenerator $urlGenerator
 	 * @param ClientMapper $clientMapper
 	 * @param ISecureRandom $secureRandom
+	 * @param AccessTokenMapper $accessTokenMapper
 	 */
 	public function __construct($appName,
 								IRequest $request,
 								IURLGenerator $urlGenerator,
 								ClientMapper $clientMapper,
-								ISecureRandom $secureRandom) {
+								ISecureRandom $secureRandom,
+								AccessTokenMapper $accessTokenMapper
+	) {
 		parent::__construct($appName, $request);
 		$this->urlGenerator = $urlGenerator;
 		$this->secureRandom = $secureRandom;
 		$this->clientMapper = $clientMapper;
+		$this->accessTokenMapper = $accessTokenMapper;
 	}
 
 	/**
@@ -78,8 +85,9 @@ class SettingsController extends Controller {
 	 * @return RedirectResponse
 	 */
 	public function deleteClient($id) {
-		$client = new Client();
-		$client->setId($id);
+		$client = $this->clientMapper->getByUid($id);
+		$this->accessTokenMapper->deleteByClientId($id);
+		// ToDo delete from oc_authtoken all entries with name=$client->getName()
 		$this->clientMapper->delete($client);
 		return new RedirectResponse($this->urlGenerator->getAbsoluteURL('/index.php/settings/admin/security'));
 	}
